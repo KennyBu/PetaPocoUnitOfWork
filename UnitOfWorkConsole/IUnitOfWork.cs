@@ -5,7 +5,8 @@ namespace UnitOfWorkConsole
 {
     public interface IUnitOfWork : IDisposable
     {
+        void BeginTransaction();
         void Commit();
-        Database Db { get; }
+        void Rollback();
     }
 }

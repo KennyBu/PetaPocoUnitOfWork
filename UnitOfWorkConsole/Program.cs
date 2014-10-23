@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using PetaPoco;
 
 namespace UnitOfWorkConsole
 {
@@ -7,7 +8,8 @@ namespace UnitOfWorkConsole
     {
         static void Main(string[] args)
         {
-            var personRepo = new PersonRepository();
+            var database = new Database("sqlserverce");
+            var personRepo = new PersonRepository(database);
             var people = personRepo.GetAllPeople();
 
             DisplayPeople(people);
@@ -23,14 +25,16 @@ namespace UnitOfWorkConsole
                     Email = email
                 };
 
-            var unitOfWorkProvider = new PetaPocoUnitOfWorkProvider();
-            using (var uow = unitOfWorkProvider.GetUnitOfWork())
+            try
             {
-
-                personRepo.InsertNewPerson(uow, newPerson);
-                personRepo.PromotePerson(uow,newPerson);
-
-                uow.Commit();
+                personRepo.BeginTransaction();
+                personRepo.InsertNewPerson(newPerson);
+                personRepo.PromotePerson(newPerson);
+                personRepo.Commit();
+            }
+            catch 
+            {
+                personRepo.Rollback();
             }
 
             people = personRepo.GetAllPeople();
@@ -54,12 +58,10 @@ namespace UnitOfWorkConsole
                 Email = email
             };
 
-            using (var uow = unitOfWorkProvider.GetUnitOfWork())
-            {
-
-                personRepo.InsertNewPerson(uow, newPerson);
-                personRepo.PromotePerson(uow, newPerson);
-            }
+            personRepo.BeginTransaction();
+            personRepo.InsertNewPerson(newPerson);
+            personRepo.PromotePerson(newPerson);
+            personRepo.Rollback();
 
             people = personRepo.GetAllPeople();
 

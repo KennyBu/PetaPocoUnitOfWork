@@ -7,32 +7,41 @@ namespace UnitOfWorkConsole
     public interface IPersonRepository
     {
         IList<Person> GetAllPeople();
-        void InsertNewPerson(IUnitOfWork unitOfWork, Person person);
-        void PromotePerson(IUnitOfWork unitOfWork, Person person);
+        void InsertNewPerson(Person person);
+        void PromotePerson(Person person);
     }
-    
-    public class PersonRepository : IPersonRepository
+
+    public class PersonRepository : PetaPocoUnitOfWork, IPersonRepository
     {
-        public IList<Person> GetAllPeople()
+        
+        private readonly Database _database;
+
+        public PersonRepository(Database database)
+            :base(database)
         {
-            return new Database("sqlserverce").Fetch<Person>("SELECT * FROM Person");
+            _database = database;
         }
 
-        public void InsertNewPerson(IUnitOfWork unitOfWork, Person person)
+        public IList<Person> GetAllPeople()
+        {
+            return _database.Fetch<Person>("SELECT * FROM Person");
+        }
+
+        public void InsertNewPerson(Person person)
         {
             if (person.LastUpdated == DateTime.MinValue)
             {
                 person.LastUpdated = DateTime.Now;
             }
             
-            unitOfWork.Db.Insert(person);    
+            _database.Insert(person);    
         }
 
-        public void PromotePerson(IUnitOfWork unitOfWork, Person person)
+        public void PromotePerson(Person person)
         {
             person.IsLeader = true;
             person.LastUpdated = DateTime.Now;
-            unitOfWork.Db.Update(person);    
+           _database.Update(person);    
         }
     }
 }
